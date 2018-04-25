@@ -120,6 +120,4 @@ def createPlot(inTree):
     plt.show()
 
 
-myTree = retrieveTree(0)
-print(myTree)
-createPlot(myTree)
+

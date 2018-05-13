@@ -76,7 +76,6 @@ def chooseBestFeatureToSplit(dataSet):
 
 import operator
 
-
 def majorityCnt(classList):
     """  this function is used when the algorithm cannot continue
     to classfy because all attributes are used

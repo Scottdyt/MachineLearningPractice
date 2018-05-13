@@ -1,0 +1,18 @@
+##ignore this file##
+
+/MNIST/data/  
+
+##filter databfile、sln file##
+  
+##class file##
+
+
+# compression file
+
+
+# OS generated files #  
+
+
+
+
+## 参考https://blog.csdn.net/u014079773/article/details/51602344

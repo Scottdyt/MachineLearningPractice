@@ -6,27 +6,41 @@
 
 ## 代码介绍
 
-1. **ReadDigit.py**
-
-   将二进制文件展示成图片。使用`ReadDigit`这个类实现，可使用类函数`showPic（）`指定显示哪一张图片，方便进行可视化查看。
-
-2. **SaveData.py**
-
-   将解析出的二进制文件使用`numpy.ndarray`进行存储，使用`pickle`库函数进行序列化，并将image和label保存为一个数组，最后保存在data文件夹中，以`test.pkl`和`train.pkl`进行存储，方便后续操作。
-
-   需要注意的是，这里没有保存原始图像的像元值，而是进行了归一化。
-
-3. **Network.py**
+1. **Network.py**
 
    自己实现的**前馈神经网络**源代码。其中使用`Network`类初始化神经网络的输入向量和层数，使用`SGD()`**随机梯度下降**进行训练。
 
-4. **Network2.py**
+   训练过程见**BPnetwork.ipynb**
+
+2. **Network2.py**
 
    改进的神经网络。包括**交叉熵代价函数、规范化**等。
 
-5. **TF.py**
+   并使用小样本训练数据观察过拟合问题。
+
+   训练过程见**EntropyFunction.ipynb**
+
+3. **TF.py**
 
    使用TensorFlow框架实现了两层的卷积神经网络识别手写数字。
+
+   训练过程见**TF.ipynb**
+
+4. **fig/**
+
+   - **ReadDigit.py**
+
+     将二进制文件展示成图片。使用`ReadDigit`这个类实现，可使用类函数`showPic（）`指定显示哪一张图片，方便进行可视化查看。
+
+   - **SaveData.py**
+
+     将解析出的二进制文件使用`numpy.ndarray`进行存储，使用`pickle`库函数进行序列化，并将image和label保存为一个数组，最后保存在data文件夹中，以`test.pkl`和`train.pkl`进行存储，方便后续操作。
+
+     需要注意的是，这里没有保存原始图像的像元值，而是进行了归一化。
+
+   - **pic.png**
+
+     手写图像的实例。
 
 ## 数据介绍
 
@@ -38,23 +52,23 @@
 
    存放经过预处理后生成矩阵的`pkl`序列化数据。
 
-3. **pic.png**
+3. **overfit**
 
-   手写图像的实例。
+   存放过拟合问题的测试集、训练集准确率和损失值。
 
-## jupyter notebook
+   **测试集采用`hold out`方法，从元数据集中抽取1000个作为测试是否过拟合。**
 
-1. **Network.ipynb**
+   `OverfitModel.json`为原始的过拟合现象
 
-   处理反馈神经网络的代码。
+   `OverfitMoreData.json`使用更多的数据防止过拟合
 
-2. **Network2.ipynb**
+   `OverfitRegularization.json`使用规范化的方法防止过拟合
 
-   改进的交叉熵神经网络实现。
-
-3. **result**
+4. **result**
 
    存放最后结果（反馈神经网络、卷积神经网络）的HTML文件。
+
+
 
 # 数据介绍
 

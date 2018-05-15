@@ -11,18 +11,49 @@ features.
 
 """
 
-#### Libraries
+# Libraries
 # Standard library
 import json
 import random
 import sys
+import pickle
 
 # Third-party libraries
 import numpy as np
+import matplotlib.pyplot as plt
+
+def load_data():
+    f1 = open('data/train.pkl', 'rb')
+    f2 = open('data/test.pkl', 'rb')
+
+    training_data = pickle.load(f1)
+    test_data = pickle.load(f2)
+
+    print(training_data[1].shape)
+    print(test_data[1].shape)
+
+    f1.close()
+    f2.close()
+    return training_data, test_data
 
 
-#### Define the quadratic and cross-entropy cost functions
+def load_data_wrapper():
+    tr_d, te_d = load_data()
+    training_inputs = [np.reshape(x, (784, 1)) for x in tr_d[0]]
+    training_results = [vectorized_result(y) for y in tr_d[1]]
+    training_data = zip(training_inputs[:50000], training_results[:50000])
+    vaildation_data = zip(training_inputs[50000:], training_results[50000:])
+    test_inputs = [np.reshape(x, (784, 1)) for x in te_d[0]]
+    test_data = zip(test_inputs, te_d[1])
+    return (training_data, vaildation_data, test_data)
 
+
+def vectorized_result(j):
+    e = np.zeros((10, 1))
+    e[j] = 1.0
+    return e
+
+# Define the quadratic and cross-entropy cost functions
 class QuadraticCost(object):
 
     @staticmethod
@@ -64,7 +95,7 @@ class CrossEntropyCost(object):
         return (a-y)
 
 
-#### Main Network class
+# Main Network class
 class Network(object):
 
     def __init__(self, sizes, cost=CrossEntropyCost):
@@ -81,7 +112,7 @@ class Network(object):
         self.num_layers = len(sizes)
         self.sizes = sizes
         self.default_weight_initializer()
-        self.cost=cost
+        self.cost = cost
 
     def default_weight_initializer(self):
         """Initialize each weight using a Gaussian distribution with mean 0
@@ -127,13 +158,13 @@ class Network(object):
         return a
 
     def SGD(self, training_data, epochs, mini_batch_size, eta,
-            lmbda = 0.0,
+            lmbda=0.0,
             evaluation_data=None,
             monitor_evaluation_cost=False,
             monitor_evaluation_accuracy=False,
             monitor_training_cost=False,
             monitor_training_accuracy=False,
-            early_stopping_n = 0):
+            early_stopping_n=0, printf=True):
         """Train the neural network using mini-batch stochastic gradient
         descent.  The ``training_data`` is a list of tuples ``(x, y)``
         representing the training inputs and the desired outputs.  The
@@ -155,7 +186,7 @@ class Network(object):
         """
 
         # early stopping functionality:
-        best_accuracy=1
+        best_accuracy = 1
 
         training_data = list(training_data)
         n = len(training_data)
@@ -165,8 +196,8 @@ class Network(object):
             n_data = len(evaluation_data)
 
         # early stopping functionality:
-        best_accuracy=0
-        no_accuracy_change=0
+        best_accuracy = 0
+        no_accuracy_change = 0
 
         evaluation_cost, evaluation_accuracy = [], []
         training_cost, training_accuracy = [], []
@@ -179,24 +210,30 @@ class Network(object):
                 self.update_mini_batch(
                     mini_batch, eta, lmbda, len(training_data))
 
-            print("Epoch %s training complete" % j)
+            if (printf):
+                print("Epoch %s training complete" % j)
 
             if monitor_training_cost:
                 cost = self.total_cost(training_data, lmbda)
                 training_cost.append(cost)
-                print("Cost on training data: {}".format(cost))
+                if (printf):
+                    print("Cost on training data: {}".format(cost))
             if monitor_training_accuracy:
                 accuracy = self.accuracy(training_data, convert=True)
                 training_accuracy.append(accuracy)
-                print("Accuracy on training data: {} / {}".format(accuracy, n))
+                if (printf):
+                    print("Accuracy on training data: {} / {}".format(accuracy, n))
             if monitor_evaluation_cost:
                 cost = self.total_cost(evaluation_data, lmbda, convert=True)
                 evaluation_cost.append(cost)
-                print("Cost on evaluation data: {}".format(cost))
+                if (printf):
+                    print("Cost on evaluation data: {}".format(cost))
             if monitor_evaluation_accuracy:
                 accuracy = self.accuracy(evaluation_data)
                 evaluation_accuracy.append(accuracy)
-                print("Accuracy on evaluation data: {} / {}".format(self.accuracy(evaluation_data), n_data))
+                if (printf):
+                    print(
+                        "Accuracy on evaluation data: {} / {}".format(self.accuracy(evaluation_data), n_data))
 
             # Early stopping:
             if early_stopping_n > 0:
@@ -242,8 +279,8 @@ class Network(object):
         nabla_w = [np.zeros(w.shape) for w in self.weights]
         # feedforward
         activation = x
-        activations = [x] # list to store all the activations, layer by layer
-        zs = [] # list to store all the z vectors, layer by layer
+        activations = [x]  # list to store all the activations, layer by layer
+        zs = []  # list to store all the z vectors, layer by layer
         for b, w in zip(self.biases, self.weights):
             z = np.dot(w, activation)+b
             zs.append(z)
@@ -295,7 +332,7 @@ class Network(object):
                        for (x, y) in data]
         else:
             results = [(np.argmax(self.feedforward(x)), y)
-                        for (x, y) in data]
+                       for (x, y) in data]
 
         result_accuracy = sum(int(x == y) for (x, y) in results)
         return result_accuracy
@@ -310,9 +347,12 @@ class Network(object):
         cost = 0.0
         for x, y in data:
             a = self.feedforward(x)
-            if convert: y = vectorized_result(y)
+            if convert:
+                y = vectorized_result(y)
             cost += self.cost.fn(a, y)/len(data)
-            cost += 0.5*(lmbda/len(data))*sum(np.linalg.norm(w)**2 for w in self.weights) # '**' - to the power of.
+            # '**' - to the power of.
+            cost += 0.5*(lmbda/len(data)) * \
+                sum(np.linalg.norm(w)**2 for w in self.weights)
         return cost
 
     def save(self, filename):
@@ -325,7 +365,7 @@ class Network(object):
         json.dump(data, f)
         f.close()
 
-#### Loading a Network
+# Loading a Network
 def load(filename):
     """Load a neural network from the file ``filename``.  Returns an
     instance of Network.
@@ -340,21 +380,139 @@ def load(filename):
     net.biases = [np.array(b) for b in data["biases"]]
     return net
 
-#### Miscellaneous functions
-def vectorized_result(j):
-    """Return a 10-dimensional unit vector with a 1.0 in the j'th position
-    and zeroes elsewhere.  This is used to convert a digit (0...9)
-    into a corresponding desired output from the neural network.
-
-    """
-    e = np.zeros((10, 1))
-    e[j] = 1.0
-    return e
-
+# Miscellaneous functions
 def sigmoid(z):
     """The sigmoid function."""
     return 1.0/(1.0+np.exp(-z))
 
+
 def sigmoid_prime(z):
     """Derivative of the sigmoid function."""
     return sigmoid(z)*(1-sigmoid(z))
+
+
+
+##### run network to see overfit and store results
+def run_network(filename, num_epochs, training_set_size=1000, lmbda=0.0):
+    """Train the network for ``num_epochs`` on ``training_set_size``
+    images, and store the results in ``filename``.  Those results can
+    later be used by ``make_plots``.  Note that the results are stored
+    to disk in large part because it's convenient not to have to
+    ``run_network`` each time we want to make a plot (it's slow).
+
+    """
+    # Make results more easily reproducible
+    # random.seed(12345678)
+    # np.random.seed(12345678)
+    training_data, validation_data, test_data = load_data_wrapper()
+    net = Network([784, 30, 10], cost=CrossEntropyCost())
+    net.large_weight_initializer()
+    test_cost, test_accuracy, training_cost, training_accuracy \
+        = net.SGD(list(training_data)[:training_set_size], num_epochs, 10, 0.5,
+                  evaluation_data=validation_data, lmbda=lmbda,
+                  monitor_evaluation_cost=True,
+                  monitor_evaluation_accuracy=True,
+                  monitor_training_cost=True,
+                  monitor_training_accuracy=True, printf=False)
+    f = open(filename, "w")
+    json.dump([test_cost, test_accuracy, training_cost, training_accuracy], f)
+    f.close()
+
+# make plots use file, set x axis and num_epochs
+def make_plots(filename, num_epochs,
+               training_cost_xmin=200,
+               test_accuracy_xmin=200,
+               test_cost_xmin=0,
+               training_accuracy_xmin=0,
+               training_set_size=1000):
+    """Load the results from ``filename``, and generate the corresponding
+    plots. """
+    f = open(filename, "r")
+    test_cost, test_accuracy, training_cost, training_accuracy \
+        = json.load(f)
+    f.close()
+    plot_training_cost(training_cost, num_epochs, training_cost_xmin)
+    plot_training_accuracy(training_accuracy, num_epochs,
+                           training_accuracy_xmin, training_set_size)
+    plot_test_cost(test_cost, num_epochs, test_cost_xmin)
+    plot_test_accuracy(test_accuracy, num_epochs, test_accuracy_xmin)
+    plot_overlay(test_accuracy, training_accuracy, num_epochs,
+                 min(test_accuracy_xmin, training_accuracy_xmin),
+                 training_set_size)
+
+
+def plot_training_cost(training_cost, num_epochs, training_cost_xmin):
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.plot(np.arange(training_cost_xmin, num_epochs),
+            training_cost[training_cost_xmin:num_epochs],
+            color='#2A6EA6')
+    ax.set_xlim([training_cost_xmin, num_epochs])
+    ax.grid(True)
+    ax.set_xlabel('Epoch')
+    ax.set_title('Cost on the training data')
+    plt.show()
+
+
+def plot_test_accuracy(test_accuracy, num_epochs, test_accuracy_xmin):
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.plot(np.arange(test_accuracy_xmin, num_epochs),
+            [accuracy/100.0
+             for accuracy in test_accuracy[test_accuracy_xmin:num_epochs]],
+            color='#2A6EA6')
+    ax.set_xlim([test_accuracy_xmin, num_epochs])
+    ax.grid(True)
+    ax.set_xlabel('Epoch')
+    ax.set_title('Accuracy (%) on the test data')
+    plt.show()
+
+
+def plot_test_cost(test_cost, num_epochs, test_cost_xmin):
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.plot(np.arange(test_cost_xmin, num_epochs),
+            test_cost[test_cost_xmin:num_epochs],
+            color='#2A6EA6')
+    ax.set_xlim([test_cost_xmin, num_epochs])
+    ax.grid(True)
+    ax.set_xlabel('Epoch')
+    ax.set_title('Cost on the test data')
+    plt.show()
+
+
+def plot_training_accuracy(training_accuracy, num_epochs,
+                           training_accuracy_xmin, training_set_size):
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.plot(np.arange(training_accuracy_xmin, num_epochs),
+            [accuracy*100.0/training_set_size
+             for accuracy in training_accuracy[training_accuracy_xmin:num_epochs]],
+            color='#2A6EA6')
+    ax.set_xlim([training_accuracy_xmin, num_epochs])
+    ax.grid(True)
+    ax.set_xlabel('Epoch')
+    ax.set_title('Accuracy (%) on the training data')
+    plt.show()
+
+
+def plot_overlay(test_accuracy, training_accuracy, num_epochs, xmin,
+                 training_set_size):
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.plot(np.arange(xmin, num_epochs),
+            [accuracy/100.0 for accuracy in test_accuracy],
+            color='#2A6EA6',
+            label="Accuracy on the test data")
+    ax.plot(np.arange(xmin, num_epochs),
+            [accuracy*100.0/training_set_size
+             for accuracy in training_accuracy],
+            color='#FFA933',
+            label="Accuracy on the training data")
+    ax.grid(True)
+    ax.set_xlim([xmin, num_epochs])
+    ax.set_xlabel('Epoch')
+    ax.set_ylim([80, 100])
+    plt.legend(loc="upper right")
+    ax.set_title('overlay accuracy in training and test')
+    plt.show()

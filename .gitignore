@@ -1,6 +1,7 @@
-##ignore this file##
+﻿##ignore this file##
 
 /MNIST/data/  
+/MNIST/__pycache__/  
 
 ##filter databfile、sln file##
   
